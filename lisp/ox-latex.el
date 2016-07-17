@@ -730,6 +730,19 @@ default we use here encompasses both."
   :type '(alist :key-type (string :tag "Type")
 		:value-type (regexp :tag "Path")))
 
+(defcustom org-latex-inline-pgf-command
+  (lambda (path) (format "\\input{%s}" path))
+  "Function used to include PGF images as links. By default, the
+pgf images is included with a simple \input{file.pgf} command,
+but the user might want to redefine this behaviour, if the pgf
+file is stored in a subdirectory, and it references external
+image files, as is the case when saving to PGF format from
+matplotlib. The user can then specify a LaTeX command that takes
+care of providing the correct search path for the external
+dependencies, by redefining \pgfimage suitably."
+  :group 'org-export-latex
+  :type 'function)
+
 (defcustom org-latex-link-with-unknown-path-format "\\texttt{%s}"
   "Format string for links with unknown path type."
   :group 'org-export-latex
@@ -2300,12 +2313,12 @@ used as a communication channel."
 	 image-code)
     (if (member filetype '("tikz" "pgf"))
 	;; For tikz images:
-	;; - use \input to read in image file.
+	;; - use \input (default, can be overridden) to read in image file.
 	;; - if options are present, wrap in a tikzpicture environment.
 	;; - if width or height are present, use \resizebox to change
 	;;   the image size.
 	(progn
-	  (setq image-code (format "\\input{%s}" path))
+	  (setq image-code (funcall org-latex-inline-pgf-command path))
 	  (when (org-string-nw-p options)
 	    (setq image-code
 		  (format "\\begin{tikzpicture}[%s]\n%s\n\\end{tikzpicture}"
